@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,103 +22,31 @@ namespace ppelourd
 
         List<Produit> lesproduits = new List<Produit>();
         List<Client> lesclients = new List<Client>();
-        List<User> lesusers = new List<User>();
-        MySqlConnection conn = null;
+        List<User> lesadmins = new List<User>();
+        List<Journal> lesjournaux = new List<Journal>();
+        List<Commande> lescommandes = new List<Commande>();
 
-       /* private Salon querySalon(int id_salon)
+        private void load_admin()
         {
-            MySqlConnection conn1 = DataBaseInfo.openConnection();
-            string sql = "SELECT * FROM salon WHERE id = " + id_salon;
-            MySqlCommand cmd = new MySqlCommand(sql, conn1);
-            MySqlDataReader rdr = cmd.ExecuteReader();
-            Salon salon = null;
+            lesadmins.Clear();
+            string sql = "Select * from admin";
+            MySqlDataReader rdr = DataBaseUtil.executeSelect(sql);
             while (rdr.Read())
             {
-               salon = new Salon(int.Parse(rdr[0].ToString()), rdr[1].ToString(), DateTime.Parse(rdr[2].ToString()), DateTime.Parse(rdr[3].ToString()), rdr[4].ToString());
-
+                int roleid = int.Parse(rdr[4].ToString());
+                User.RoleType role = User.intToRoleType(roleid);
+                User AdminViews = new User(int.Parse(rdr[0].ToString()), rdr[1].ToString(), rdr[2].ToString(), rdr[3].ToString(), role, bool.Parse(rdr[5].ToString()));
+                lesadmins.Add(AdminViews);
             }
             rdr.Close();
-            conn1.Close();
-            return salon;
-        }*/
-
-       /* private List<Salon> querySalons(int idparticipant)
-        {
-            List<Salon> lessalons = new List<Salon>(); 
-            string sql = "SELECT id_salon FROM participer WHERE id_participant = " + idparticipant;
-            MySqlCommand cmd = new MySqlCommand(sql, conn);
-            MySqlDataReader rdr = cmd.ExecuteReader();
-            while (rdr.Read())
-            {
-                int id_salon = int.Parse(rdr[0].ToString());
-                Salon s = querySalon(id_salon);
-                if (s != null)
-                {
-                    lessalons.Add(s);
-                }
-            }
-            rdr.Close();
-            return lessalons;
-        }*/
-        /*private void updateParticipantSalon()
-        {
-            foreach (Participant p in lesparticipants)
-            {
-                List<Salon> lessalons = querySalons(p.Id);
-                p.setSalons(lessalons);
-            }
-        }*/
-
-       /* private Participant queryParticipant(int id_participant)
-        {
-            MySqlConnection conn1 = DataBaseInfo.openConnection();
-            string sql = "SELECT * FROM participant WHERE id = " + id_participant;
-            MySqlCommand cmd = new MySqlCommand(sql, conn1);
-            MySqlDataReader rdr = cmd.ExecuteReader();
-            Participant participant = null;
-            while (rdr.Read())
-            {
-                participant = new Participant(int.Parse(rdr[0].ToString()), rdr[1].ToString(), rdr[2].ToString(), rdr[3].ToString(), rdr[4].ToString());
-
-            }
-            rdr.Close();
-            conn1.Close();
-            return participant;
-        }*/
-
-        /*private List<Participant> queryParticipants(int idsalon)
-        {
-            List<Participant> lesParticipants = new List<Participant>();
-            string sql = "SELECT id_participant FROM participer WHERE id_salon = " + idsalon;
-            MySqlCommand cmd = new MySqlCommand(sql, conn);
-            MySqlDataReader rdr = cmd.ExecuteReader();
-            while (rdr.Read())
-            {
-                int id_participant = int.Parse(rdr[0].ToString());
-                Participant p = queryParticipant(id_participant);
-                if (p != null)
-                {
-                    lesParticipants.Add(p);
-                }
-            }
-            rdr.Close();
-            return lesParticipants;
-        }*/
-
-        /*private void updateSalonParticipant()
-        {
-            foreach (Salon s in lessalon)
-            {
-                List<Participant> lesparticipants = queryParticipants(s.Id);
-                s.setParticipants(lesparticipants);
-            }
-        }*/
+            DGVAdmin.DataSource = null;
+            DGVAdmin.DataSource = lesadmins;
+        }
         private void load_client()
         {
             lesclients.Clear();
-            string sql = "Select * from users ";
-            MySqlCommand cmd = new MySqlCommand(sql, conn);
-            MySqlDataReader rdr = cmd.ExecuteReader();
+            string sql = "Select * from users ";         
+            MySqlDataReader rdr = DataBaseUtil.executeSelect(sql);
             while (rdr.Read())
             {
                 Client ClientView = new Client(int.Parse(rdr[0].ToString()), rdr[1].ToString(), rdr[2].ToString(), rdr[3].ToString(), rdr[4].ToString());
@@ -125,43 +54,72 @@ namespace ppelourd
 
             }
             rdr.Close();
-            //updateParticipantSalon();
             DGVClient.DataSource = null;
             DGVClient.DataSource = lesclients;
         }
         private void load_produit()
         {
             lesproduits.Clear();
-            string sql = "Select id_produit, nom_produit, p_motscles, description, qteProduit, prix from produit ";
-            MySqlCommand cmd = new MySqlCommand(sql, conn);
-            MySqlDataReader rdr = cmd.ExecuteReader();
+            string sql = "SELECT produit.*, categorie.nom_categorie from produit, categorie WHERE produit.id_categorie = categorie.id_categorie";
+            MySqlDataReader rdr = DataBaseUtil.executeSelect(sql);
             while (rdr.Read())
             {
-                Produit ProduitView = new Produit(int.Parse(rdr[0].ToString()), rdr[1].ToString(), rdr[2].ToString(), rdr[3].ToString(), int.Parse(rdr[4].ToString()), float.Parse(rdr[5].ToString()));
+                Produit ProduitView = new Produit(int.Parse(rdr[0].ToString()), rdr[1].ToString(), rdr[2].ToString(), rdr[3].ToString(), int.Parse(rdr[4].ToString()), float.Parse(rdr[5].ToString()), rdr[8].ToString());
                 lesproduits.Add(ProduitView);
             }
             rdr.Close();
-            //updateSalonParticipant();
-            DGVSalon.DataSource = null;
-            DGVSalon.DataSource = lesproduits;
+            DGVProduit.DataSource = null;
+            DGVProduit.DataSource = lesproduits;
         }
 
-        private void load_admin()
+        private void load_journal()
         {
+            lesjournaux.Clear();
+            DateTime dt = DateTime.Now.Subtract(new TimeSpan(3,0,0,0,0));
+            string strdate = Journal.dateTimeToSQLString(dt);
+            string sql = $"SELECT username, dateconnect, role, etat from journal, admin WHERE journal.PersonID = admin.id AND dateconnect > '{strdate}' ORDER BY dateconnect DESC";
+            MySqlDataReader rdr = DataBaseUtil.executeSelect(sql);
+            while (rdr.Read())
+            {
+                dt = DateTime.Parse(rdr[1].ToString());
+                int r = int.Parse(rdr[2].ToString());
+                bool etat = Boolean.Parse(rdr[3].ToString());
+                Journal JournalView = new Journal(dt, rdr[0].ToString(),User.intToRoleType(r), etat);
+                lesjournaux.Add(JournalView);
+            }
+            rdr.Close();
+            DGVJournal.DataSource = null;
+            DGVJournal.DataSource = lesjournaux;
         }
+
+        private void load_commande()
+        {
+            lescommandes.Clear();
+            string sql = "SELECT * from commande ";
+            MySqlCommand cmd = new MySqlCommand(sql);
+            MySqlDataReader rdr = DataBaseUtil.executeSelect(sql);
+            while (rdr.Read())
+            {
+                Commande CommandeView = new Commande(int.Parse(rdr[0].ToString()), rdr[1].ToString(), rdr[2].ToString(), rdr[3].ToString());
+                int ref_com = int.Parse(rdr[0].ToString());
+                string date_commande = (rdr[1].ToString());
+                string id_u = (rdr[2].ToString());
+                string total = (rdr[3].ToString());
+                lescommandes.Add(CommandeView);
+            }
+            rdr.Close();
+            DGVCommande.DataSource = null;
+            DGVCommande.DataSource = lescommandes;
+        }
+
 
         private void admin_Load(object sender, EventArgs e)
         {
-            conn = DataBaseInfo.openConnection();
             load_client();
             load_produit();
-            
-        }
-
-        private void btnUpdateParticipant_Click(object sender, EventArgs e)
-        {
-            UpdateParticipant update = new UpdateParticipant();
-            update.Show();
+            load_admin();
+            load_journal();
+            load_commande();
 
         }
 
@@ -175,36 +133,29 @@ namespace ppelourd
             }
             foreach (Client p in selected)
             {
-                string sql = "DELETE FROM participant WHERE email = '" + p.Email + "'";
-                MySqlCommand cmd = new MySqlCommand(sql, conn);
-                cmd.ExecuteNonQuery();
+                string sql = "DELETE FROM users WHERE id = '" + p.Id + "'";
+                DataBaseUtil.executeNonQuery(sql);
             }
             load_client();
 
         }
 
-        private void btnAddParticipant_Click(object sender, EventArgs e)
+        private void btnAddProduit_Click(object sender, EventArgs e)
         {
-            inscriptionClient inscription = new inscriptionClient();
-            inscription.Show();
+            AjouterProduit();
         }
 
-        private void btnUpdateSalon_Click(object sender, EventArgs e)
-        {
-         
-
-        }
-
-        private void btnAddSalon_Click(object sender, EventArgs e)
+        private void AjouterProduit()
         {
             InsertProduit insertionProduit = new InsertProduit();
-            insertionProduit.Show();
+            insertionProduit.ShowDialog();
+            load_produit();
         }
 
         private void btnDeleteSalon_Click(object sender, EventArgs e)
         {
             List<Produit> selected = new List<Produit>();
-            foreach (DataGridViewRow row in DGVSalon.SelectedRows)
+            foreach (DataGridViewRow row in DGVProduit.SelectedRows)
             {
                 selected.Add(lesproduits[row.Index]);
                 //DGVParticipant.Rows.RemoveAt(row.Index);
@@ -212,8 +163,7 @@ namespace ppelourd
             foreach (Produit s in selected)
             {
                 string sql = "DELETE FROM produit WHERE id_produit = " + s.Id;
-                MySqlCommand cmd = new MySqlCommand(sql, conn);
-                cmd.ExecuteNonQuery();
+                DataBaseUtil.executeNonQuery(sql);
             }
             load_produit();
         }
@@ -222,6 +172,7 @@ namespace ppelourd
         {
             insertAdmin insertionOperator = new insertAdmin();
             insertionOperator.ShowDialog();
+            load_admin();
         }
 
         private void DGVParticipant_CellEndEdit(object sender, DataGridViewCellEventArgs e)
@@ -252,24 +203,13 @@ namespace ppelourd
                 }
                 if (modifiedColumn != null)
                 {
-                    MySqlConnection conn = DataBaseInfo.openConnection();
                     string sql = $"UPDATE users SET {modifiedColumn} = '{DGVClient.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString()}' WHERE id = {client.Id} ";
-                    MySqlCommand cmd = new MySqlCommand(sql, conn);
-                    try
-                    {
-                        cmd.ExecuteNonQuery();
-                    }
-                    catch
+                    
+                    if(DataBaseUtil.executeNonQuery(sql) == -1)
                     {
                         MessageBox.Show("Failed to Update User");
                     }
-                    finally
-                    {
-                        conn.Close();
-                    }
-
-                }
-                
+                }       
             }
 
 
@@ -277,7 +217,127 @@ namespace ppelourd
 
         private void DGVSalon_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
+            if (0 <= e.RowIndex && e.RowIndex < lesproduits.Count)
+            {
+                float prix = -1;
+                Produit produit = lesproduits[e.RowIndex];
+                string strvalue = null;
+                int intvalue = 0;
+                string modifiedColumn = null;
+                if (e.ColumnIndex == 1)
+                {
+                    modifiedColumn = "nom_produit";
+                    strvalue = DGVProduit.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                }
+                else if (e.ColumnIndex == 2)
+                {
+                    modifiedColumn = "p_motscles";
+                    strvalue = DGVProduit.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                }
+                else if (e.ColumnIndex == 3)
+                {
+                    modifiedColumn = "description";
+                    strvalue = DGVProduit.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                }
+                else if (e.ColumnIndex == 4)
+                {
+                    modifiedColumn = "qteProduit";
+                    intvalue = int.Parse(DGVProduit.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString());
+                }
+                else if (e.ColumnIndex == 5)
+                {
+                    
+                    modifiedColumn = "prix";
+                    prix = float.Parse(DGVProduit.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString());
+                    
+                }
+                else if (e.ColumnIndex == 6)
+                {
+                    modifiedColumn = "id_categorie";
+                    string tmp = DGVProduit.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+                    intvalue = Categorie.stringToId(tmp);
+                    if (intvalue == 0)
+                    {
+                        MessageBox.Show("Catégorie introuvable");
+                        return;
+                    }
+                }
+
+                if (modifiedColumn != null)
+                {
+                    string sql = null;
+                    if (strvalue != null)
+                    {
+                        sql = $"UPDATE produit SET {modifiedColumn} = '{strvalue}' WHERE id_produit = {produit.Id} ";
+                    }
+                    else if (prix >= 0)
+                    {
+                        NumberFormatInfo nfi = new NumberFormatInfo();
+                        nfi.NumberDecimalSeparator = ".";
+                        string strprix = prix.ToString(nfi);
+                        sql = $"UPDATE produit SET {modifiedColumn} = {strprix} WHERE id_produit = {produit.Id} ";
+                    }
+                    else
+                    {
+                        sql = $"UPDATE produit SET {modifiedColumn} = {intvalue} WHERE id_produit = {produit.Id} ";
+                    }
+                    if (DataBaseUtil.executeNonQuery(sql) == -1)
+                    {
+                        MessageBox.Show("Failed to Update User");
+                    }
+                }
+            }
+        }
+
+        private void btndeleteAdmin_Click(object sender, EventArgs e)
+        {
+            List<User> selected = new List<User>();
+            foreach (DataGridViewRow row in DGVAdmin.SelectedRows)
+            {
+                selected.Add(lesadmins[row.Index]);
+                //DGVParticipant.Rows.RemoveAt(row.Index);
+            }
+            foreach (User s in selected)
+            {
+                string sql = "DELETE FROM admin WHERE id = " + s.Id;
+                DataBaseUtil.executeNonQuery(sql);
+              
+            }
+            load_admin();
 
         }
+
+        private void DGVAdmin_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            if (0 <= e.RowIndex && e.RowIndex < lesadmins.Count)
+            {
+                User admin = lesadmins[e.RowIndex];
+                if(e.ColumnIndex == 5)
+                {
+                    if(admin.Role == User.RoleType.ADMIN)
+                    {
+                        MessageBox.Show("Vous ne pouvez pas verrouiller le compte d'un administrateur");
+                    }
+                    else
+                    {
+                        User.lockUnlockUser(admin.Username, admin.Locked);
+                    }
+
+                }
+                load_admin();
+
+            }
+
+        }
+
+        private void DGVClient_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+    
+    
     }
+
+
 }

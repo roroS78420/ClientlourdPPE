@@ -9,7 +9,7 @@ namespace ppelourd
 {
     class DataBaseInfo
     {
-        private static string chainedeconnexion = "server=localhost;user id=root;database=lourdppe";
+        private static string chainedeconnexion = "server=localhost;user id=root;database=ppe";
         public static string ConnectionString
         {
             get

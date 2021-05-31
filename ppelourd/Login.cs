@@ -15,13 +15,23 @@ namespace ppelourd
     {
         public int role = 0;
         public string nomoperateur;
+        Dictionary<string, int> dictUserConnexion = new Dictionary<string, int>();
 
         public string StrLevel = "Inconnu";
         public Login()
         {
             InitializeComponent();
         }
-        string chainedeconnexion = "server=localhost;user id=root;database=ppe";
+        private void AjouterJournalConnexion(int id_admin, DateTime t, bool etat)
+        {
+
+            string dt = t.ToString("yyyy-MM-dd HH:mm:ss");
+            string sql = $"INSERT INTO journal (dateconnect, etat, PersonID) VALUES ('{dt}', {etat}, {id_admin})";
+            if (DataBaseUtil.executeNonQuery(sql) == -1)
+            {
+                MessageBox.Show("Erreur lors de l'insertion dans le journal");
+            }
+        }
         private void btnLogin_Click(object sender, EventArgs e)
         {
             if (txtusername.Text == "" || txtpassword.Text == "")
@@ -35,24 +45,53 @@ namespace ppelourd
                 string pass = txtpassword.Text;
                 pass = SHA.petitsha(pass);
 
-                
-                MySqlConnection conn = new MySqlConnection(chainedeconnexion);
-                conn.Open();
-                string sql = $"Select username, pass, Role from admin where username='{username}' and pass='{pass}'";
-                MySqlCommand cmd = new MySqlCommand(sql, conn);
-                MySqlDataReader rdr = cmd.ExecuteReader();
+                if (User.checkUserLocked(username))
+                {
+                    MessageBox.Show("Votre compte a été verouillé suite à 5 tentatives échouées");
+                    this.DialogResult = DialogResult.Cancel;
+                    return ;
+                }
+
+                string sql = $"Select id, username, pass, Role from admin where username='{username}'";
+                MySqlDataReader rdr = DataBaseUtil.executeSelect(sql);
                 if (rdr.Read())
                 {
                     labelError.Visible = false;
-                    role = int.Parse(rdr[2].ToString());
-                    nomoperateur = rdr[0].ToString();
-                    this.DialogResult = DialogResult.OK;
+                    int id = int.Parse(rdr[0].ToString());
+                    string password = rdr[2].ToString();
+                    bool etat = password.Equals(pass.ToLower());
+                    role = int.Parse(rdr[3].ToString());
+                    nomoperateur = rdr[1].ToString();
+                    if (etat)
+                    {
+                        this.DialogResult = DialogResult.OK;
+                    }
+                    else
+                    {
+                        int nbr = -1;
+                        if(!dictUserConnexion.TryGetValue(username, out nbr))
+                        {
+                            dictUserConnexion.Add(username, 0);
+                        }
+                        dictUserConnexion[username]++;
+                        nbr = dictUserConnexion[username];
+                        
+
+                        if (dictUserConnexion[username] == 5)
+                        {
+                            User.lockUnlockUser(username, true);
+                        }
+                        
+                        labelError.Visible = true;
+                    }
+                    rdr.Close();
+                    AjouterJournalConnexion(id, DateTime.Now, etat);
+
 
                 }
                 else
                 {
                     labelError.Visible = true;
-
                 }
             }
             catch

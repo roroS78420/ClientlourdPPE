@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,18 @@ namespace ppelourd
 {
     class User
     {
+        private int id;
+        public int Id
+        {
+            get
+            {
+                return id;
+            }
+            set
+            {
+                id = value;
+            }
+        }
         public enum RoleType
         {
             EMPLOYE,
@@ -21,6 +34,10 @@ namespace ppelourd
             {
                 return username;
             }
+            set
+            {
+                username = value;
+            }
         }
 
         private string email;
@@ -30,6 +47,10 @@ namespace ppelourd
             {
                 return email;
             }
+            set
+            {
+                email = value;
+            }
         }
 
         private string password;
@@ -38,6 +59,10 @@ namespace ppelourd
             get
             {
                 return password;
+            }
+            set
+            {
+                password = value;
             }
         }
         private RoleType role;
@@ -49,12 +74,28 @@ namespace ppelourd
             }
         }
 
-        public User (string username, string email, string password, RoleType role)
+        private bool locked;
+        public bool Locked
         {
+            get
+            {
+                return locked;
+            }
+
+            set
+            {
+                locked = value;
+            }
+        }
+
+        public User (int id, string username, string email,string password,  RoleType role, bool locked)
+        {
+            this.id = id;
             this.username = username;
             this.email = email;
             this.password = password;
             this.role = role;
+            this.locked = locked;
         }
 
         public static int roleTypeToInt(RoleType role)
@@ -86,6 +127,44 @@ namespace ppelourd
                     throw new Exception("Unknown Role Type");
 
             }
+        }
+
+        public static bool checkUserLocked(string username)
+        {
+           
+            string sql = $"Select locked FROM admin WHERE admin.username = '{username}' ";
+
+            try
+            {
+                MySqlDataReader rdr = DataBaseUtil.executeSelect(sql);
+                while (rdr.Read())
+                {
+                    bool locked = bool.Parse(rdr[0].ToString());
+                    if (locked)
+                    {
+                        rdr.Close();
+                        return true;
+                    }
+                }
+                rdr.Close();
+                return false;
+            }
+            catch
+            {
+
+            }
+            return false;
+        }
+
+        public static bool lockUnlockUser(string username, bool locked)
+        {
+            string sql = $"UPDATE admin SET locked = {locked} WHERE admin.username = '{username}' AND admin.Role <> 1 ";
+
+            return (DataBaseUtil.executeNonQuery(sql) > 0);
+
+            
+              
+            
         }
     }
 }
